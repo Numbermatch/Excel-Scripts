@@ -1,0 +1,678 @@
+Sub Clear()
+‘Removes blank cells that are populated with spaces or other characters
+
+For Each cell In Selection
+	If cell = "" Then
+		cell.ClearContents
+	Else
+	End If
+Next cell
+
+End Sub
+
+Sub Holy_Sheet()
+‘Adds an array of sheets based on a selection of cells
+
+Dim ourBool As Boolean
+
+If Selection.Count < 16 Then
+
+ourList = Selection.Count
+
+ReDim theArray(Selection.Count) As Variant
+prevPages = Sheets.Count
+
+k = 0
+For Each cell In Selection
+    theArray(k) = cell.Value
+    k = k + 1
+Next cell
+
+ourBool = True
+
+For i = 1 To ourList
+    For j = (i + 1) To ourList
+        If theArray(i - 1) = theArray(j - 1) Then
+        ourBool = False
+        Else
+        End If
+    Next j
+Next i
+
+If ourBool = True Then
+counter = 0
+While Sheets.Count < (ourList + prevPages)
+    Sheets.Add After:=Sheets(Sheets.Count)
+    Sheets(Sheets.Count).Name = theArray(counter)
+    counter = counter + 1
+Wend
+
+Else
+End If
+
+Else
+End If
+
+End Sub
+
+Sub Filler()
+'This macro populates a selection based on the previous cell value
+
+For Each cell In Selection
+    If cell <> "" Then
+    valholder = cell
+    Else
+    cell.Value = valholder
+    End If
+Next cell
+
+End Sub
+
+Sub One_Separate()
+'This macro divides data ,based on a user selected column, into worksheets all the same (named by the ‘value in the selected column)
+Dim tester As Boolean, firstLine As Boolean
+
+Application.ScreenUpdating = False
+
+oldSheet = Sheets.Count
+originalSheet = ActiveSheet.Name
+
+OurC = InputBox("Which Column in the selection is being divided up?")
+
+ourAnswer = InputBox("Does the first row contain titles?")
+
+If Left(ourAnswer, 1) = "Y" Or Left(ourAnswer, 1) = "y" Then
+firstLine = True
+Else
+firstLine = False
+End If
+
+If OurC = "" Or ourAnswer = "" Or (OurC = "" And ourAnswer = "") Then
+
+Else
+
+totC = Selection.Columns.Count
+totR = Selection.Rows.Count
+
+ReDim IDray(totR, totC) As Variant
+
+'Getting to the first cell in our block
+For Each cell In Selection
+    cell.Activate
+Exit For
+Next cell
+
+startR = ActiveCell.Row
+startC = ActiveCell.Column
+
+'Filling 2D array
+For i = 1 To totR
+    For j = 1 To totC
+    IDray(i - 1, j - 1) = Cells(startR - 1 + i, startC - 1 + j)
+    Next j
+Next i
+
+ReDim tempRay(totR) As Variant
+
+'Full 1D arry of what needs to be eliminated
+For i = 1 To totR
+    tempRay(i - 1) = Cells(startR - 1 + i, OurC + startC - 1)
+Next i
+
+'Removing duplicates
+For i = 1 To totR
+    For j = (i + 1) To totR
+    If tempRay(i - 1) = tempRay(j - 1) Then
+    tempRay(j - 1) = ""
+    Else
+    End If
+    Next j
+Next i
+
+'Counting full entries
+For i = 1 To totR
+    If tempRay(i - 1) <> "" Then
+    k = k + 1
+    Else
+    End If
+Next i
+
+ReDim tempArray(k) As Variant
+
+tester = True
+k = 0
+'Counting full entries
+For i = 1 To totR
+    If tempRay(i - 1) <> "" Then
+    k = k + 1
+    tempArray(k - 1) = tempRay(i - 1)
+    If IsNumeric(tempArray(k - 1)) = True Then
+    tester = False
+    Else
+    End If
+    Else
+    End If
+Next i
+
+'Getting a count on our number of sheets
+counter = 0
+For i = 1 To k
+    If tempArray(i - 1) = "" Then
+    Else
+    counter = counter + 1
+    End If
+Next i
+
+If tester = True And k <= 50 Then
+
+theCounter = 0
+While Sheets.Count < (oldSheet + counter)
+    Sheets.Add After:=Sheets(Sheets.Count)
+    Sheets(Sheets.Count).Name = tempArray(theCounter)
+    theCounter = theCounter + 1
+Wend
+
+For i = 1 To totR
+    Worksheets(IDray(i - 1, OurC - 1)).Select
+    ourRow = Application.WorksheetFunction.CountA(Columns("A")) + 1
+    For j = 1 To totC
+        Cells(ourRow, j) = IDray(i - 1, j - 1)
+    Next j
+Next i
+
+Worksheets(originalSheet).Select
+
+If firstLine = True Then
+
+ReDim titleArray(totC) As Variant
+
+Cells(startR, startC).Select
+For i = 1 To totC
+    titleArray(i - 1) = ActiveCell
+    Selection.Offset(0, 1).Select
+Next i
+
+For i = 1 To theCounter
+    Worksheets(tempArray(i - 1)).Select
+    Rows(1).Select
+    Selection.Insert Shift:=xlDown
+    For j = 1 To totC
+    Cells(1, j) = titleArray(j - 1)
+    Rows(1).Font.Bold = True
+    Next j
+Next i
+
+Worksheets(tempArray(0)).Select
+Application.DisplayAlerts = False
+ActiveSheet.Delete
+Application.DisplayAlerts = True
+Worksheets(originalSheet).Select
+
+End If
+
+Else
+End If
+
+Application.ScreenUpdating = True
+
+End If
+
+End Sub
+
+
+
+Public Sub CountDistinct()
+‘Returns a count of distinct values effeciently. 0 if no selection, and #N/A if errors in cells by design
+arraySize = Selection.Count
+
+ReDim tempRay(arraySize) As Variant
+i = 0
+For Each cell In Selection
+    tempRay(i) = cell
+    i = i + 1
+Next cell
+
+For i = 1 To arraySize
+    j = (i + 1)
+    While (tempRay(i - 1) <> "" And j <= arraySize)
+        If tempRay(i - 1) = tempRay(j - 1) Then
+            tempRay(j - 1) = ""
+        End If
+    j = j + 1
+    Wend
+Next i
+
+ourCount = 0
+For i = 1 To arraySize
+    If tempRay(i - 1) <> "" Then
+        ourCount = ourCount + 1
+    End If
+Next i
+
+If ourCount = 1 Then
+    MsgBox "There is " & ourCount & " distinct record in the selection."
+Else
+    MsgBox "There are " & ourCount & " distinct records in the selection."
+End If
+
+End Sub
+
+
+Sub Funnel()
+‘Clears out blank rows in a workbook. Can certianly be optimized better
+ActiveSheet.UsedRange.Select
+Dim r As Long
+With Application
+.Calculation = xlCalculationManual
+.ScreenUpdating = False
+For r = Selection.Rows.Count To 1 Step -1
+If WorksheetFunction.CountA(Selection.Rows(r)) = 0 Then
+Selection.Rows(r).EntireRow.Delete
+End If
+Next r
+.Calculation = xlCalculationAutomatic
+.ScreenUpdating = True
+End With
+
+
+End Sub
+
+Public Sub Cleaner()
+‘Removes leading and empty spaces from cells where you want to preserve their contents
+For Each cell In Selection
+
+
+ourValue = cell
+
+
+If Left(ourValue, 1) = " " Then
+
+While Left(ourValue, 1) = " "
+ourValue = Right(ourValue, Len(ourValue) - 1)
+Wend
+
+End If
+
+
+If Right(ourValue, 1) = " " Then
+
+While Right(ourValue, 1) = " "
+ourValue = Left(ourValue, Len(ourValue) - 1)
+Wend
+
+End If
+
+cell.Value = ourValue
+
+Next cell
+
+
+End Sub
+
+Public Sub reSize()
+‘Englarges workbook sizing for easier view
+
+Selection.Columns.ColumnWidth = 35.86
+'Selection.Rows.EntireRow.AutoFit
+Selection.Columns.EntireColumn.AutoFit
+
+Selection.RowHeight = 15
+
+End Sub
+Sub Space_Scrub()
+
+For Each cell In Selection
+
+    While (Right(cell.Value, 1) = " ")
+        cell.Value = Left(cell.Value, Len(cell.Value) - 1)
+    Wend
+    
+    While (Left(cell.Value, 1) = " ")
+        cell.Value = Right(cell.Value, Len(cell.Value) - 1)
+    Wend
+    
+
+Next cell
+
+End Sub
+
+Public Sub Linear()
+‘Creates an iterative list of numbers based on selection
+
+ourAnswer = InputBox("Really?")
+
+If Left(ourAnswer, 1) = "y" Or Left(ourAnswer, 1) = "Y" Then
+    i = 1
+    For Each cell In Selection
+        cell.Value = i
+        i = i + 1
+    Next cell
+End If
+
+End Sub
+
+Sub reSTART()
+‘Pulls the selection to the top of all workbooks
+checkans = InputBox("Ready?")
+
+If Left(checkans, 1) = "Y" Or Left(checkans, 1) = "y" Then
+
+	ourpages = Sheets.Count
+
+	For i = 1 To ourpages
+	    If Sheets(i).Visible = True Then
+	        Sheets(i).Select
+	        Range("A1").Select
+	    End If
+	Next i
+
+	Sheets(1).Select
+
+Else
+End If
+
+End Sub
+Sub Outlier()
+‘Finds the highest / lowest / “closest to” value in selection and takes you there
+
+typeTest = InputBox("Are you looking for the Highest Value, the Lowest Value, or the Closest Value?")
+
+For Each cell In Selection
+testVar = cell
+    If holdVar <= testVar Then
+    holdVar = testVar
+    Else
+    End If
+Next cell
+
+If typeTest = "" Then
+Else
+End If
+
+If Left(typeTest, 1) = "c" Then
+closestVal = InputBox("Closest value to what?")
+
+For Each cell In Selection
+testVar = cell
+    If Abs(holdVar - closestVal) >= Abs(testVar - closestVal) Then
+    holdVar = testVar
+    Else
+    End If
+Next cell
+
+ElseIf Left(typeTest, 1) = "l" Then
+
+For Each cell In Selection
+testVar = cell
+    If holdVar >= testVar Then
+    holdVar = testVar
+    Else
+    End If
+Next cell
+
+ElseIf Left(typeTest, 1) = "h" Then
+For Each cell In Selection
+testVar = cell
+    If holdVar >= testVar Then
+    Else
+    holdVar = testVar
+    End If
+Next cell
+
+End If
+
+For Each cell In Selection
+    If holdVar = cell Then
+    cell.Select
+    Exit For
+    Else
+    End If
+Next cell
+
+End Sub
+Sub Leading_Zeros()
+
+For Each cell In Selection
+    cell.Value = "'" & Application.WorksheetFunction.Text(cell, "0000#")
+Next cell
+
+End Sub
+
+
+Public Sub Find_Duplicates()
+‘Highlights duplicate values
+Dim myRange As Range
+Dim myCell As Range
+
+Set myRange = Selection
+
+For Each myCell In myRange
+    If WorksheetFunction.Countif(myRange, myCell.Value) > 1 Then
+        myCell.Interior.ColorIndex = 8
+    End If
+Next myCell
+
+
+End Sub
+
+Public Sub UndhideAll()
+‘Unhides all worksheets at once
+Dim ws As Worksheet
+
+For Each ws In ActiveWorkbook.Worksheets
+    ws.Visible = xlSheetVisible
+Next ws
+
+End Sub
+
+Sub GroupBy()
+‘A very useful, but un-optimized code that should be adjusted. 
+‘This will look at all of the unique selections in the selected columns and list out every combination
+'Positioning
+ourColumns = Selection.Columns.Count
+ourRows = Selection.Rows.Count
+
+ReDim tempRay(ourRows, ourColumns) As Variant
+
+max1 = Application.WorksheetFunction.CountA(Selection.Columns(1).Rows)
+max2 = Application.WorksheetFunction.CountA(Selection.Columns(2).Rows)
+max3 = Application.WorksheetFunction.CountA(Selection.Columns(3).Rows)
+max4 = Application.WorksheetFunction.CountA(Selection.Columns(4).Rows)
+max5 = Application.WorksheetFunction.CountA(Selection.Columns(5).Rows)
+max6 = Application.WorksheetFunction.CountA(Selection.Columns(6).Rows)
+max7 = Application.WorksheetFunction.CountA(Selection.Columns(7).Rows)
+max8 = Application.WorksheetFunction.CountA(Selection.Columns(8).Rows)
+max9 = Application.WorksheetFunction.CountA(Selection.Columns(9).Rows)
+max10 = Application.WorksheetFunction.CountA(Selection.Columns(10).Rows)
+
+ReDim tempRay1(Application.WorksheetFunction.CountA(Selection.Columns(1).Rows)) As Variant
+ReDim tempRay2(Application.WorksheetFunction.CountA(Selection.Columns(2).Rows)) As Variant
+ReDim tempRay3(Application.WorksheetFunction.CountA(Selection.Columns(3).Rows)) As Variant
+ReDim tempRay4(Application.WorksheetFunction.CountA(Selection.Columns(4).Rows)) As Variant
+ReDim tempRay5(Application.WorksheetFunction.CountA(Selection.Columns(5).Rows)) As Variant
+ReDim tempRay6(Application.WorksheetFunction.CountA(Selection.Columns(6).Rows)) As Variant
+ReDim tempRay7(Application.WorksheetFunction.CountA(Selection.Columns(7).Rows)) As Variant
+ReDim tempRay8(Application.WorksheetFunction.CountA(Selection.Columns(8).Rows)) As Variant
+ReDim tempRay9(Application.WorksheetFunction.CountA(Selection.Columns(9).Rows)) As Variant
+ReDim tempRay10(Application.WorksheetFunction.CountA(Selection.Columns(10).Rows)) As Variant
+
+startRow = Selection.Row
+startColumn = Selection.Column
+
+'Reading In
+For a = 1 To max1
+    tempRay1(a) = Selection.Columns(1).Rows(a)
+Next a
+For b = 1 To max2
+    tempRay2(b) = Selection.Columns(2).Rows(b)
+Next b
+For c = 1 To max3
+    tempRay3(c) = Selection.Columns(3).Rows(c)
+Next c
+For d = 1 To max4
+    tempRay4(d) = Selection.Columns(4).Rows(d)
+Next d
+For e = 1 To max5
+    tempRay5(e) = Selection.Columns(5).Rows(e)
+Next e
+For f = 1 To max6
+    tempRay6(f) = Selection.Columns(6).Rows(f)
+Next f
+For g = 1 To max7
+    tempRay7(g) = Selection.Columns(7).Rows(g)
+Next g
+For h = 1 To max8
+    tempRay8(h) = Selection.Columns(8).Rows(h)
+Next h
+For i = 1 To max9
+    tempRay9(i) = Selection.Columns(9).Rows(i)
+Next i
+For j = 1 To max10
+    tempRay10(j) = Selection.Columns(10).Rows(j)
+Next j
+
+'Writing Out and deciding
+currentRow = startRow
+
+If ourColumns = 2 Then
+For a = 1 To max1
+For b = 1 To max2
+    Cells(currentRow, startColumn) = tempRay1(a)
+    Cells(currentRow, startColumn + 1) = tempRay2(b)
+    
+    currentRow = currentRow + 1
+Next b
+Next a
+
+ElseIf ourColumns = 3 Then
+
+For a = 1 To max1
+For b = 1 To max2
+For c = 1 To max3
+    Cells(currentRow, startColumn) = tempRay1(a)
+    Cells(currentRow, startColumn + 1) = tempRay2(b)
+    Cells(currentRow, startColumn + 2) = tempRay3(c)
+
+    currentRow = currentRow + 1
+Next c
+Next b
+Next a
+
+ElseIf ourColumns = 4 Then
+
+For a = 1 To max1
+For b = 1 To max2
+For c = 1 To max3
+For d = 1 To max4
+    Cells(currentRow, startColumn) = tempRay1(a)
+    Cells(currentRow, startColumn + 1) = tempRay2(b)
+    Cells(currentRow, startColumn + 2) = tempRay3(c)
+    Cells(currentRow, startColumn + 3) = tempRay4(d)
+
+    currentRow = currentRow + 1
+Next d
+Next c
+Next b
+Next a
+
+ElseIf ourColumns = 5 Then
+
+For a = 1 To max1
+For b = 1 To max2
+For c = 1 To max3
+For d = 1 To max4
+For e = 1 To max5
+    Cells(currentRow, startColumn) = tempRay1(a)
+    Cells(currentRow, startColumn + 1) = tempRay2(b)
+    Cells(currentRow, startColumn + 2) = tempRay3(c)
+    Cells(currentRow, startColumn + 3) = tempRay4(d)
+    Cells(currentRow, startColumn + 4) = tempRay5(e)
+
+    currentRow = currentRow + 1
+Next e
+Next d
+Next c
+Next b
+Next a
+
+ElseIf ourColumns = 6 Then
+
+For a = 1 To max1
+For b = 1 To max2
+For c = 1 To max3
+For d = 1 To max4
+For e = 1 To max5
+For f = 1 To max6
+    Cells(currentRow, startColumn) = tempRay1(a)
+    Cells(currentRow, startColumn + 1) = tempRay2(b)
+    Cells(currentRow, startColumn + 2) = tempRay3(c)
+    Cells(currentRow, startColumn + 3) = tempRay4(d)
+    Cells(currentRow, startColumn + 4) = tempRay5(e)
+    Cells(currentRow, startColumn + 5) = tempRay6(f)
+
+    currentRow = currentRow + 1
+Next f
+Next e
+Next d
+Next c
+Next b
+Next a
+
+ElseIf ourColumns = 7 Then
+
+For a = 1 To max1
+For b = 1 To max2
+For c = 1 To max3
+For d = 1 To max4
+For e = 1 To max5
+For f = 1 To max6
+For g = 1 To max7
+    Cells(currentRow, startColumn) = tempRay1(a)
+    Cells(currentRow, startColumn + 1) = tempRay2(b)
+    Cells(currentRow, startColumn + 2) = tempRay3(c)
+    Cells(currentRow, startColumn + 3) = tempRay4(d)
+    Cells(currentRow, startColumn + 4) = tempRay5(e)
+    Cells(currentRow, startColumn + 5) = tempRay6(f)
+    Cells(currentRow, startColumn + 6) = tempRay7(g)
+
+    currentRow = currentRow + 1
+Next g
+Next f
+Next e
+Next d
+Next c
+Next b
+Next a
+
+ElseIf ourColumns = 8 Then
+
+For a = 1 To max1
+For b = 1 To max2
+For c = 1 To max3
+For d = 1 To max4
+For e = 1 To max5
+For f = 1 To max6
+For g = 1 To max7
+For h = 1 To max8
+    Cells(currentRow, startColumn) = tempRay1(a)
+    Cells(currentRow, startColumn + 1) = tempRay2(b)
+    Cells(currentRow, startColumn + 2) = tempRay3(c)
+    Cells(currentRow, startColumn + 3) = tempRay4(d)
+    Cells(currentRow, startColumn + 4) = tempRay5(e)
+    Cells(currentRow, startColumn + 5) = tempRay6(f)
+    Cells(currentRow, startColumn + 6) = tempRay7(g)
+    Cells(currentRow, startColumn + 7) = tempRay8(h)
+
+    currentRow = currentRow + 1
+Next h
+Next g
+Next f
+Next e
+Next d
+Next c
+Next b
+Next a
+
+End If
+
+End Sub
