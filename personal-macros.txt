@@ -230,7 +230,7 @@ For Each cell in Selection
     End If
 Next cell
 
-MsgBox ourDictionary.Count
+ourCount = ourDictionary.Count
 Set ourDictionary = Nothing
 
 If ourCount = 1 Then
