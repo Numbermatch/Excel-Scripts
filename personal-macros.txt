@@ -219,35 +219,19 @@ End If
 
 End Sub
 
-
-
 Public Sub CountDistinct()
-‘Returns a count of distinct values effeciently. 0 if no selection, and #N/A if errors in cells by design
-arraySize = Selection.Count
+‘Returns a count of distinct values effeciently. 
 
-ReDim tempRay(arraySize) As Variant
-i = 0
-For Each cell In Selection
-    tempRay(i) = cell
-    i = i + 1
+Set ourDictionary = CreateObject("Scripting.Dictionary")
+
+For Each cell in Selection
+    If ourDictionary.Exists(cell.Value) = False Then
+        ourDictionary.Add cell.Value, True
+    End If
 Next cell
 
-For i = 1 To arraySize
-    j = (i + 1)
-    While (tempRay(i - 1) <> "" And j <= arraySize)
-        If tempRay(i - 1) = tempRay(j - 1) Then
-            tempRay(j - 1) = ""
-        End If
-    j = j + 1
-    Wend
-Next i
-
-ourCount = 0
-For i = 1 To arraySize
-    If tempRay(i - 1) <> "" Then
-        ourCount = ourCount + 1
-    End If
-Next i
+MsgBox ourDictionary.Count
+Set ourDictionary = Nothing
 
 If ourCount = 1 Then
     MsgBox "There is " & ourCount & " distinct record in the selection."
@@ -256,7 +240,6 @@ Else
 End If
 
 End Sub
-
 
 Sub Funnel()
 ‘Clears out blank rows in a workbook. Can certianly be optimized better
